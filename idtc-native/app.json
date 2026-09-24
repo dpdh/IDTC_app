@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "IDTC",
+    "slug": "idtc",
+    "scheme": "idtc",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/ITDC_icon_app_01.png",
+    "splash": {
+      "image": "./assets/ITDC_icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#E6F4FE"
+    },
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dani19eng.idtc-native",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/ITDC_icon_app_01.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.dani19eng.idtcnative"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "11e70aff-fedd-4fc1-96bd-268dee03307c"
+      }
+    },
+    "plugins": [
+      "expo-web-browser",
+      "expo-apple-authentication"
+    ]
+  }
+}

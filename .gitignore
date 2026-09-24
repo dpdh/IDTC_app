@@ -1,0 +1,28 @@
+.DS_Store
+.history/
+**/.git.local-backup/
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies and generated output
+**/node_modules/
+**/vendor/
+**/.expo/
+**/dist/
+**/build/
+**/.next/
+**/storage/logs/
+**/storage/framework/cache/
+**/storage/framework/sessions/
+**/storage/framework/views/
+
+# Native and local tooling
+**/ios/Pods/
+**/android/.gradle/
+**/.idea/
+**/.vscode/
+*.log
+*.tsbuildinfo
