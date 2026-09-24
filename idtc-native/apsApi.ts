@@ -59,6 +59,14 @@ export type IdtcBootstrap = {
   }>;
 };
 
+export type IdtcAuthUser = {
+  id: number;
+  name: string;
+  email: string;
+  status: string;
+  roles: Array<{ name: string; label: string }>;
+};
+
 const apsApiUrl = (process.env.EXPO_PUBLIC_IDTC_API_URL ?? process.env.EXPO_PUBLIC_APS_API_URL ?? 'http://127.0.0.1:8000').replace(/\/$/, '');
 
 function getApiUrl(path: string) {
@@ -114,4 +122,17 @@ export async function askDinaAi(message: string): Promise<string | null> {
   } catch {
     return findLocalIhsanAnswer(message);
   }
+}
+
+export async function loginIdtc(email: string, password: string): Promise<IdtcAuthUser> {
+  const url = getApiUrl('/api/auth/login');
+  if (!url) throw new Error('API IDTC belum dikonfigurasi.');
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password }),
+  });
+  const payload = await response.json() as { user?: IdtcAuthUser; message?: string };
+  if (!response.ok || !payload.user) throw new Error(payload.message ?? 'Login gagal.');
+  return payload.user;
 }

@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { askDinaAi, fetchACCProjects, fetchAPSFacilities, fetchIdtcBootstrap, type APSFacilityProject } from './apsApi';
+import { askDinaAi, fetchACCProjects, fetchAPSFacilities, fetchIdtcBootstrap, loginIdtc, type APSFacilityProject } from './apsApi';
 import { ihsanAiProfile } from './ihsanAiData';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -680,6 +680,9 @@ function OnboardingExperience({ finish }: { finish: () => void }) {
 function Auth({ mode, changeMode, finish }: { mode: AuthMode; changeMode: (mode: AuthMode) => void; finish: (admin: boolean) => void }) {
   const login = mode === 'login';
   const [error, setError] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loggingIn, setLoggingIn] = useState(false);
   const [loadingProvider, setLoadingProvider] = useState<'google' | 'apple' | null>(null);
   const [appleAvailable, setAppleAvailable] = useState(false);
   const googleClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? process.env.EXPO_PUBLIC_GOOGLE_EXPO_CLIENT_ID;
@@ -767,10 +770,28 @@ function Auth({ mode, changeMode, finish }: { mode: AuthMode; changeMode: (mode:
     }
   };
 
-  const providerLoading = loadingProvider !== null;
+  const signInWithPassword = async () => {
+    if (!email.trim() || !password) {
+      setError('Email dan password wajib diisi.');
+      return;
+    }
+    setError('');
+    setLoggingIn(true);
+    try {
+      const user = await loginIdtc(email.trim().toLowerCase(), password);
+      const isAdmin = user.roles.some((role) => role.name === 'super_admin' || role.name === 'admin');
+      finish(isAdmin);
+    } catch (loginError) {
+      setError(loginError instanceof Error ? loginError.message : 'Login gagal.');
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
+  const providerLoading = loadingProvider !== null || loggingIn;
   const appleButtonStyle = { height: 52, borderRadius: 18, backgroundColor: '#050505', marginTop: 12, alignItems: 'center' as const, justifyContent: 'center' as const, flexDirection: 'row' as const, gap: 10, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 4 };
   const authButtonDisabledStyle = { opacity: 0.55 };
-  return <SafeAreaView style={styles.screen}><View style={styles.topRow}><Brand /><Text style={styles.authStatus}>DIGITAL TWIN PLATFORM</Text></View><ScrollView contentContainerStyle={styles.authBody}><Text style={styles.eyebrow}>{login ? 'AKSES PLATFORM' : 'REGISTRASI PENGGUNA'}</Text><Text style={styles.authTitle}>{login ? 'Masuk ke pusat kendali.' : 'Buat identitas IDTC.'}</Text><Text style={styles.onboardingCopy}>{login ? 'Akses wawasan, pantau progres, dan kembangkan kapabilitas Digital Twin Anda.' : 'Daftarkan diri untuk mempelajari, merancang, dan mengembangkan sistem Digital Twin.'}</Text><Pressable disabled={providerLoading} style={[styles.googleButton, providerLoading && authButtonDisabledStyle]} onPress={signInWithGoogle}><Text style={styles.googleText}>G</Text><Text style={styles.googleLabel}>{loadingProvider === 'google' ? 'Menghubungkan ke Google...' : login ? 'Masuk dengan akun Gmail' : 'Daftar dengan akun Gmail'}</Text></Pressable>{appleAvailable && <Pressable disabled={providerLoading} style={[appleButtonStyle, providerLoading && authButtonDisabledStyle]} onPress={signInWithApple}><Text style={{ color: '#fff', fontSize: 18 }}>●</Text><Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{loadingProvider === 'apple' ? 'Menghubungkan ke Apple...' : login ? 'Masuk dengan Apple ID' : 'Daftar dengan Apple ID'}</Text></Pressable>}<Text style={styles.divider}>────────  akun digunakan untuk akses IDTC  ────────</Text>{error !== '' && <Text style={styles.error}>{error}</Text>}<Pressable disabled={providerLoading} style={[styles.primaryButtonWide, providerLoading && authButtonDisabledStyle]} onPress={signInWithGoogle}><Text style={styles.primaryText}>{login ? 'Masuk melalui Gmail' : 'Daftar melalui Gmail'}  ↗</Text></Pressable>{!login && <Pressable disabled={providerLoading} style={styles.guestButton} onPress={() => finish(false)}><Text style={styles.guestText}>Masuk sebagai tamu  →</Text></Pressable>}<Pressable disabled={providerLoading} onPress={() => changeMode(login ? 'register' : 'login')}><Text style={styles.switchText}>{login ? 'Belum memiliki akun? Daftar sekarang' : 'Sudah memiliki akun? Masuk ke platform'}</Text></Pressable></ScrollView><StatusBar style="light" /></SafeAreaView>;
+  return <SafeAreaView style={styles.screen}><View style={styles.topRow}><Brand /><Text style={styles.authStatus}>DIGITAL TWIN PLATFORM</Text></View><ScrollView contentContainerStyle={styles.authBody}><Text style={styles.eyebrow}>{login ? 'AKSES PLATFORM' : 'REGISTRASI PENGGUNA'}</Text><Text style={styles.authTitle}>{login ? 'Masuk ke pusat kendali.' : 'Buat identitas IDTC.'}</Text><Text style={styles.onboardingCopy}>{login ? 'Akses wawasan, pantau progres, dan kembangkan kapabilitas Digital Twin Anda.' : 'Daftarkan diri untuk mempelajari, merancang, dan mengembangkan sistem Digital Twin.'}</Text><TextInput value={email} onChangeText={setEmail} placeholder="Email IDTC" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} placeholderTextColor="#7da6bc" style={[styles.input, { marginTop: 22, color: colors.text }]} /><TextInput value={password} onChangeText={setPassword} placeholder="Password" secureTextEntry placeholderTextColor="#7da6bc" style={[styles.input, { color: colors.text }]} onSubmitEditing={signInWithPassword} returnKeyType="go" /><Pressable disabled={providerLoading} style={[styles.primaryButtonWide, providerLoading && authButtonDisabledStyle]} onPress={signInWithPassword}><Text style={styles.primaryText}>{loggingIn ? 'Menghubungkan ke server...' : 'Masuk ke IDTC'}  ↗</Text></Pressable><Text style={styles.divider}>────────  atau gunakan akun sosial  ────────</Text><Pressable disabled={providerLoading} style={[styles.googleButton, providerLoading && authButtonDisabledStyle]} onPress={signInWithGoogle}><Text style={styles.googleText}>G</Text><Text style={styles.googleLabel}>{loadingProvider === 'google' ? 'Menghubungkan ke Google...' : 'Masuk dengan akun Gmail'}</Text></Pressable>{appleAvailable && <Pressable disabled={providerLoading} style={[appleButtonStyle, providerLoading && authButtonDisabledStyle]} onPress={signInWithApple}><Text style={{ color: '#fff', fontSize: 18 }}>●</Text><Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{loadingProvider === 'apple' ? 'Menghubungkan ke Apple...' : 'Masuk dengan Apple ID'}</Text></Pressable>}{error !== '' && <Text style={styles.error}>{error}</Text>}{!login && <Pressable disabled={providerLoading} style={styles.guestButton} onPress={() => finish(false)}><Text style={styles.guestText}>Masuk sebagai tamu  →</Text></Pressable>}<Pressable disabled={providerLoading} onPress={() => changeMode(login ? 'register' : 'login')}><Text style={styles.switchText}>{login ? 'Belum memiliki akun? Daftar sekarang' : 'Sudah memiliki akun? Masuk ke platform'}</Text></Pressable></ScrollView><StatusBar style="light" /></SafeAreaView>;
 }
 
 function Profile({ themeDark, setThemeDark, admin, restart }: { themeDark: boolean; setThemeDark: (value: boolean) => void; admin: boolean; restart: () => void }) { return <ScrollView contentContainerStyle={styles.content}><View style={styles.profileHero}><View style={styles.avatar}><Text style={styles.avatarText}>DH</Text></View><View><Text style={styles.eyebrow}>IDENTITAS PENGGUNA</Text><Text style={styles.profileName}>Dani Hamdani</Text><Text style={styles.profileEmail}>dani@idtc.org</Text><Text style={styles.origin}>Super Admin</Text></View></View>{admin && <View style={styles.adminBanner}><Text style={styles.adminStar}>✦</Text><View style={{ flex: 1 }}><Text style={styles.adminTitle}>Super Admin</Text><Text style={styles.adminCopy}>Akses penuh terhadap ekosistem IDTC</Text></View><Text style={styles.adminTag}>ADMIN</Text></View>}<Text style={styles.sectionEyebrow}>KONFIGURASI</Text><Text style={styles.sectionTitle}>Preferensi platform</Text><View style={styles.setting}><Text style={styles.settingIcon}>◐</Text><View style={{ flex: 1 }}><Text style={styles.settingTitle}>Mode gelap</Text><Text style={styles.settingCopy}>{themeDark ? 'Mode gelap aktif' : 'Mode terang aktif'}</Text></View><Switch value={themeDark} onValueChange={setThemeDark} trackColor={{ false: '#467087', true: colors.blue }} thumbColor={themeDark ? colors.cyan : '#d7edf4'} /></View><Pressable style={styles.profileAction} onPress={restart}><Text style={styles.actionIcon}>◈</Text><View style={{ flex: 1 }}><Text style={styles.settingTitle}>Tinjau kembali onboarding</Text><Text style={styles.settingCopy}>Bangun fondasi pemahaman Digital Twin</Text></View><Text style={styles.actionArrow}>↗</Text></Pressable>{admin && <Pressable style={styles.profileAction}><Text style={styles.actionIcon}>◎</Text><View style={{ flex: 1 }}><Text style={styles.settingTitle}>Manajemen pengguna</Text><Text style={styles.settingCopy}>Kelola akses, peran, dan otorisasi pengguna</Text></View><Text style={styles.actionArrow}>↗</Text></Pressable>}</ScrollView>; }

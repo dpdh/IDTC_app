@@ -17,9 +17,9 @@ class IdtcDatabaseSeeder extends Seeder
     {
         $roles = collect([
             ['name' => 'super_admin', 'label' => 'Super Admin', 'description' => 'Full access to users, content, projects, and settings.'],
-            ['name' => 'content_editor', 'label' => 'Content Editor', 'description' => 'Create, edit, publish, and archive IDTC learning content.'],
-            ['name' => 'facility_manager', 'label' => 'Facility Manager', 'description' => 'Manage Digital Twin project and operational data.'],
-            ['name' => 'viewer', 'label' => 'Viewer', 'description' => 'Read published content and project summaries.'],
+            ['name' => 'admin', 'label' => 'Admin', 'description' => 'Manage content, projects, and operational data without changing system ownership.'],
+            ['name' => 'membership', 'label' => 'Membership', 'description' => 'Access member learning content, project summaries, and member features.'],
+            ['name' => 'free', 'label' => 'Free', 'description' => 'Access public learning content and basic IDTC information.'],
         ])->mapWithKeys(fn (array $role) => [$role['name'] => Role::updateOrCreate(['name' => $role['name']], $role)]);
 
         $admin = User::updateOrCreate(

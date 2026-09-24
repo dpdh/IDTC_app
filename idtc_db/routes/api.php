@@ -3,10 +3,12 @@
 use App\Models\Content;
 use App\Models\Project;
 use App\Http\Controllers\DinaAiController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MidtransPaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/dina-ai/chat', [DinaAiController::class, 'chat']);
+Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/payments/midtrans/snap', [MidtransPaymentController::class, 'createSnapTransaction']);
 Route::post('/payments/midtrans/notification', [MidtransPaymentController::class, 'notification']);
 
